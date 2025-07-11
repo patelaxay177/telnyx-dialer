@@ -114,4 +114,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { MySQLStorage } from "./mysql-storage";
+
+// Use MySQL storage if DATABASE_URL is provided, otherwise use in-memory storage
+export const storage = process.env.DATABASE_URL ? new MySQLStorage() : new MemStorage();
