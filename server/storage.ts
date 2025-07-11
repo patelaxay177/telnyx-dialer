@@ -57,7 +57,8 @@ export class MemStorage implements IStorage {
       id, 
       startTime: new Date(),
       endTime: null,
-      duration: null
+      duration: null,
+      telnyxCallId: insertCall.telnyxCallId || null
     };
     this.calls.set(id, call);
     return call;
@@ -74,7 +75,11 @@ export class MemStorage implements IStorage {
   async getCallsByUserId(userId: number): Promise<Call[]> {
     return Array.from(this.calls.values())
       .filter(call => call.userId === userId)
-      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+      .sort((a, b) => {
+        const aTime = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const bTime = b.startTime ? new Date(b.startTime).getTime() : 0;
+        return bTime - aTime;
+      });
   }
 
   async updateCall(id: number, updates: Partial<Call>): Promise<Call | undefined> {
@@ -88,7 +93,12 @@ export class MemStorage implements IStorage {
 
   async createContact(insertContact: InsertContact): Promise<Contact> {
     const id = this.currentContactId++;
-    const contact: Contact = { ...insertContact, id };
+    const contact: Contact = { 
+      ...insertContact, 
+      id,
+      email: insertContact.email || null,
+      company: insertContact.company || null
+    };
     this.contacts.set(id, contact);
     return contact;
   }
