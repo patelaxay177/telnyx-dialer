@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCallState } from '@/hooks/use-call-state';
 import { useWebSocket } from '@/hooks/use-websocket';
@@ -46,6 +46,72 @@ export default function DialerPage() {
   const { data: callHistory = [] } = useQuery<Call[]>({
     queryKey: ['/api/calls', CURRENT_USER_ID],
   });
+
+  // Keyboard input handling
+  const handleKeyboardInput = useCallback((event: KeyboardEvent) => {
+    // Only handle keyboard input when not typing in an input field
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    const key = event.key;
+    
+    // Handle number keys (0-9)
+    if (/^[0-9]$/.test(key)) {
+      callState.appendDigit(key);
+      event.preventDefault();
+    }
+    // Handle special characters
+    else if (key === '*') {
+      callState.appendDigit('*');
+      event.preventDefault();
+    }
+    else if (key === '#') {
+      callState.appendDigit('#');
+      event.preventDefault();
+    }
+    else if (key === '+') {
+      callState.appendDigit('+');
+      event.preventDefault();
+    }
+    // Handle backspace
+    else if (key === 'Backspace' || key === 'Delete') {
+      callState.deleteLastDigit();
+      event.preventDefault();
+    }
+    // Handle enter for call
+    else if (key === 'Enter') {
+      if (!callState.isInCall) {
+        callState.initiateCall('+15551234567');
+      }
+      event.preventDefault();
+    }
+    // Handle escape for hangup
+    else if (key === 'Escape') {
+      if (callState.isInCall) {
+        callState.hangupCall();
+      }
+      event.preventDefault();
+    }
+    // Handle space for hold toggle
+    else if (key === ' ' && callState.isInCall) {
+      callState.toggleHold();
+      event.preventDefault();
+    }
+    // Handle 'm' for mute toggle
+    else if (key.toLowerCase() === 'm' && callState.isInCall) {
+      callState.toggleMute();
+      event.preventDefault();
+    }
+  }, [callState]);
+
+  // Add keyboard event listener
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyboardInput);
+    return () => {
+      document.removeEventListener('keydown', handleKeyboardInput);
+    };
+  }, [handleKeyboardInput]);
 
   // Call duration timer
   useEffect(() => {
@@ -122,6 +188,13 @@ export default function DialerPage() {
               activeCall={callState.activeCall}
               callDuration={callState.callDuration}
             />
+
+            {/* Keyboard shortcuts info */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Keyboard shortcuts:</strong> 0-9, *, #, + for dialing | Enter to call | Escape to hangup | Space to hold | M to mute
+              </p>
+            </div>
 
             {/* Keypad */}
             <DialerKeypad

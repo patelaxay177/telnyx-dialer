@@ -33,13 +33,41 @@ export function DialerKeypad({
     { digit: '#', letters: '' },
   ];
 
+  const handleKeyPress = (digit: string) => {
+    // Handle special case for + symbol (long press on 0 or direct + input)
+    if (digit === '0' || digit === '+') {
+      onKeyPress(digit === '+' ? '+' : '0');
+    } else {
+      onKeyPress(digit);
+    }
+  };
+
+  // Handle + symbol with long press on 0
+  const handleZeroLongPress = () => {
+    onKeyPress('+');
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-      <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+      <div className="max-w-sm mx-auto">
+        <div className="grid grid-cols-3 gap-4 mb-4">
         {keypadData.map(({ digit, letters }) => (
           <button
             key={digit}
-            onClick={() => onKeyPress(digit)}
+            onClick={() => handleKeyPress(digit)}
+            onMouseDown={digit === '0' ? (e) => {
+              // Long press for + symbol
+              const timer = setTimeout(() => {
+                handleZeroLongPress();
+              }, 500);
+              
+              const handleMouseUp = () => {
+                clearTimeout(timer);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+              
+              document.addEventListener('mouseup', handleMouseUp);
+            } : undefined}
             className="aspect-square rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all duration-200 hover:shadow-lg hover:scale-105 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <div className="flex flex-col items-center justify-center h-full">
@@ -48,6 +76,29 @@ export function DialerKeypad({
             </div>
           </button>
         ))}
+        
+        {/* Add + button for easier access */}
+        <button
+          onClick={() => onKeyPress('+')}
+          className="aspect-square rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all duration-200 hover:shadow-lg hover:scale-105 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 col-span-3"
+        >
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="text-2xl font-semibold text-blue-600">+</span>
+            <span className="text-xs text-blue-500">International</span>
+          </div>
+        </button>
+        </div>
+        
+        {/* Add + button for easier access */}
+        <button
+          onClick={() => onKeyPress('+')}
+          className="w-full mb-4 py-3 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all duration-200 hover:shadow-lg hover:scale-105 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <div className="flex items-center justify-center">
+            <span className="text-xl font-semibold text-blue-600 mr-2">+</span>
+            <span className="text-sm text-blue-500">International Prefix</span>
+          </div>
+        </button>
       </div>
 
       {/* Action Buttons */}
